@@ -14,7 +14,7 @@ const io = new Server(server, {
   }
 });
 
-// This line serves your HTML, CSS, and JS files, fixing "Cannot GET /"
+// This serves your HTML, CSS, and JS files
 app.use(express.static(path.join(__dirname)));
 
 const PORT = process.env.PORT || 3000;
@@ -27,12 +27,7 @@ io.on('connection', (socket) => {
     socket.join(partyId);
     socket.partyId = partyId;
 
-    // This creates a unique participant object with an ID from the socket connection.
-    // THIS IS THE CRITICAL FIX that prevents duplication.
-    const participant = {
-      ...userProfile,
-      id: socket.id, 
-    };
+    const participant = { ...userProfile, id: socket.id };
     socket.userProfile = participant;
     
     if (!parties[partyId]) {
@@ -65,20 +60,20 @@ io.on('connection', (socket) => {
     io.in(partyId).emit('newPartyState', { newState, byHostName: userProfile.name });
   });
 
-  // When a user sends a chat message (text or GIF)
+  // --- THIS IS THE CORRECTED CHAT HANDLER ---
+  // It correctly expects a data object with 'type' and 'content' properties.
   socket.on('chatMessage', (data) => {
     if (!socket.partyId || !socket.userProfile || !data || !data.type || !data.content) return;
     
-    // The data object now contains the type ('text' or 'gif') and the content
     const chatData = {
       user: socket.userProfile,
       type: data.type,
       content: data.content,
       timestamp: new Date()
     };
-    // Broadcast the structured message to everyone in the party room
     io.in(socket.partyId).emit('newChatMessage', chatData);
   });
+  // ------------------------------------------
 
   socket.on('disconnect', () => {
     console.log(`User disconnected: ${socket.id}`);
