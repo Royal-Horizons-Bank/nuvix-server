@@ -75,6 +75,26 @@ io.on('connection', (socket) => {
   });
   // ------------------------------------------
 
+
+   // --- ADD THESE NEW HANDLERS FOR TYPING INDICATOR ---
+
+  // When a user starts typing
+  socket.on('typingStart', () => {
+    // Broadcast to others in the room that this user is typing
+    if (socket.partyId && socket.userProfile) {
+      socket.to(socket.partyId).emit('userIsTyping', socket.userProfile);
+    }
+  });
+
+  // When a user stops typing
+  socket.on('typingStop', () => {
+    // Broadcast to others that this user has stopped typing
+    if (socket.partyId && socket.userProfile) {
+      socket.to(socket.partyId).emit('userStoppedTyping', socket.userProfile);
+    }
+  });
+
+
   socket.on('disconnect', () => {
     console.log(`User disconnected: ${socket.id}`);
     const { partyId, userProfile } = socket;
