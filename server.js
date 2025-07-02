@@ -65,14 +65,18 @@ io.on('connection', (socket) => {
     io.in(partyId).emit('newPartyState', { newState, byHostName: userProfile.name });
   });
 
-  socket.on('chatMessage', (message) => {
-    if (!socket.partyId || !socket.userProfile) return;
+  // When a user sends a chat message (text or GIF)
+  socket.on('chatMessage', (data) => {
+    if (!socket.partyId || !socket.userProfile || !data || !data.type || !data.content) return;
     
+    // The data object now contains the type ('text' or 'gif') and the content
     const chatData = {
       user: socket.userProfile,
-      text: message,
+      type: data.type,
+      content: data.content,
       timestamp: new Date()
     };
+    // Broadcast the structured message to everyone in the party room
     io.in(socket.partyId).emit('newChatMessage', chatData);
   });
 
